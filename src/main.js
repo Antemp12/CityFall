@@ -1,22 +1,24 @@
-import { Start } from './scenes/Start.js';
+// main.js
 
+import Menu from './scenes/Menu.js'; 
+import NivelJogoScene from './scenes/NivelJogoScene.js'; // Adicione a Scene de Jogo
+
+// Definição das configurações do jogo
 const config = {
     type: Phaser.AUTO,
-    title: 'Overlord Rising',
-    description: '',
-    parent: 'game-container',
-    width: 1280,
-    height: 720,
-    backgroundColor: '#000000',
-    pixelArt: false,
+    width: 1280, 
+    height: 720, 
     scene: [
-        Start
+        Menu, 
+        NivelJogoScene // Scene de Jogo
     ],
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    },
-}
+    physics: {
+        default: 'arcade', // Usando Arcade Physics
+        arcade: {
+            debug: false 
+        }
+    }
+};
 
-new Phaser.Game(config);
-            
+// Criação da instância do jogo
+const game = new Phaser.Game(config);
