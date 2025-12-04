@@ -34,12 +34,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const frameRate = 6; 
         const walkRate = 12; 
         
-        // IDLE DOWN, UP, SIDE
+        // IDLE
         scene.anims.create({ key: 'idle_down', frames: scene.anims.generateFrameNumbers('Idle', { start: 0, end: 7 }), frameRate: frameRate, repeat: -1 });
         scene.anims.create({ key: 'idle_up', frames: scene.anims.generateFrameNumbers('Idle', { start: 8, end: 15 }), frameRate: frameRate, repeat: -1 });
         scene.anims.create({ key: 'idle_side', frames: scene.anims.generateFrameNumbers('Idle', { start: 16, end: 23 }), frameRate: frameRate, repeat: -1 });
         
-        // WALK DOWN, UP, SIDE (CORRIGIDO: WALK UP utiliza frames 25 a 32)
+        // WALK
         scene.anims.create({ key: 'walk_down', frames: scene.anims.generateFrameNumbers('walk', { start: 0, end: 7 }), frameRate: walkRate, repeat: -1 });
         scene.anims.create({ key: 'walk_up', frames: scene.anims.generateFrameNumbers('walk', { start: 25, end: 32 }), frameRate: walkRate, repeat: -1 });
         scene.anims.create({ key: 'walk_side', frames: scene.anims.generateFrameNumbers('walk', { start: 16, end: 23 }), frameRate: walkRate, repeat: -1 });
@@ -77,7 +77,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
             const dashImpulse = 700;
             
-            // Desativa o arrasto (drag) para garantir o movimento
             this.body.setDrag(0); 
             this.setVelocity(dirX * dashImpulse, dirY * dashImpulse);
 
@@ -90,7 +89,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.scene.time.delayedCall(this.dashDuration, () => {
                 this.isDashing = false;
                 this.setVelocity(0); 
-                this.body.setDrag(500); // Restaura o arrasto
+                this.body.setDrag(500); 
             });
             return; 
         }

@@ -4,10 +4,9 @@ export default class HUDScene extends Phaser.Scene {
     
     dashBar;
     towerHealthBar;
+    towerHealthBarTitle; 
     textChips; 
     textKills; 
-    // towerHealthTitleBg foi removido
-    towerHealthBarTitle; 
     
     gameScene;
 
@@ -30,16 +29,12 @@ export default class HUDScene extends Phaser.Scene {
         // 1. BARRA DE VIDA DA TORRE (Verde)
         this.towerHealthBar = this.add.graphics();
         
-        // CÓDIGO REMOVIDO: Não adiciona o fundo preto
-        // this.towerHealthTitleBg = this.add.graphics().setScrollFactor(0);
-        // this.towerHealthTitleBg.fillStyle(0x000000, 0.7); 
-        // this.towerHealthTitleBg.fillRect(960 / 2 - 100, 5, 200, 25);
-        
+        // CRIAÇÃO DO TÍTULO: Já centrado em X=480 com setOrigin(0.5)
         this.towerHealthBarTitle = this.add.text(960 / 2, 12, 'HOPE HEALTH', { 
             fontSize: '14px', 
             fill: '#ffffff', 
             fontFamily: 'Arial, sans-serif'
-        }).setOrigin(0.5).setScrollFactor(0); // Título flutua
+        }).setOrigin(0.5).setScrollFactor(0);
         
         this.updateTowerHealthBar(1); 
         
@@ -48,21 +43,17 @@ export default class HUDScene extends Phaser.Scene {
         this.dashBar.setVisible(false); 
         
         // 3. TEXTO E ÍCONES HUD
-        
-        // ÍCONE DO CHIP
         this.add.image(20, 45, 'chipIcon')
             .setScrollFactor(0)
             .setOrigin(0.5)
             .setScale(0.035); 
         
-        // TEXTO DE CHIPS (MAIOR E AMARELO)
-        this.textChips = this.add.text(45, 35, '0', { 
+        this.textChips = this.add.text(45, 38, '0', { 
             fontSize: '28px', 
             fill: '#ffdf00', 
             fontFamily: 'Verdana, sans-serif'
         }).setScrollFactor(0);
         
-        // TEXTO DE KILLS (MAIOR E BRANCO)
         this.textKills = this.add.text(10, 90, 'KILLS: 0', { 
             fontSize: '20px', 
             fill: '#cccccc', 
@@ -91,22 +82,28 @@ export default class HUDScene extends Phaser.Scene {
         }
     }
     
-    // --- FUNÇÃO 1: BARRA DE VIDA DA TORRE (Limpa e Longa) ---
+    // --- FUNÇÃO 1: BARRA DE VIDA DA TORRE (Centramento Corrigido) ---
     updateTowerHealthBar(ratio) {
         const barWidth = 400; 
         const barHeight = 15; 
-        const xOffset = 960 / 2; // Centro do ecrã
+        const xOffset = 960 / 2; // 480
         const yOffset = 40; 
+        const titleYOffset = 12; // Posição Y do título
 
+        const barStartX = xOffset - (barWidth / 2); // 480 - 200 = 280
+        
         this.towerHealthBar.clear();
         
         // Fundo Vermelho
         this.towerHealthBar.fillStyle(0x880000); 
-        this.towerHealthBar.fillRect(xOffset - (barWidth / 2), yOffset, barWidth, barHeight);
+        this.towerHealthBar.fillRect(barStartX, yOffset, barWidth, barHeight);
         
         // Barra Verde
         this.towerHealthBar.fillStyle(0x00ff00); 
-        this.towerHealthBar.fillRect(xOffset - (barWidth / 2), yOffset, barWidth * ratio, barHeight);
+        this.towerHealthBar.fillRect(barStartX, yOffset, barWidth * ratio, barHeight);
+        
+        // CORREÇÃO: O Título é apenas posicionado em Y, pois já está centrado em X=480 no create().
+        this.towerHealthBarTitle.y = titleYOffset; 
         
         this.towerHealthBar.setScrollFactor(0); 
     }
@@ -120,11 +117,9 @@ export default class HUDScene extends Phaser.Scene {
 
         this.dashBar.clear();
         
-        // Fundo Cinzento
         this.dashBar.fillStyle(0x555555);
         this.dashBar.fillRect(xOffset, yOffset, barWidth, barHeight);
         
-        // Barra Azul
         this.dashBar.fillStyle(0x0000ff);
         this.dashBar.fillRect(xOffset, yOffset, barWidth * ratio, barHeight);
         

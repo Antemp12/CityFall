@@ -2,8 +2,7 @@ import MenuScene from "./scenes/MenuScene.js";
 import OpcoesScene from "./scenes/OpcoesScene.js";
 import InstrucoesScene from "./scenes/InstrucoesScene.js";
 import GameScene from "./scenes/GameScene.js";
-import Player from "./scenes/Player.js";
-import HUDScene from "./scenes/HUDScene.js";
+import HUDScene from "./scenes/HUDScene.js"; // NOVO: HUDScene
 
 const config = {
     type: Phaser.AUTO,
@@ -16,10 +15,11 @@ const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     
+    // ATIVAÇÃO DO SISTEMA DE FÍSICA
     physics: {
         default: 'arcade',
         arcade: {
-            debug: false
+            debug: false // Mude para true para ver as caixas de colisão
         }
     },
 
@@ -27,8 +27,8 @@ const config = {
         MenuScene,
         OpcoesScene,
         InstrucoesScene,
-        GameScene,
-        HUDScene
+        GameScene, // Cena do Jogo
+        HUDScene   // HUD por cima
     ]
 };
 
