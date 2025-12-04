@@ -1,7 +1,8 @@
 import MenuScene from "./scenes/MenuScene.js";
 import OpcoesScene from "./scenes/OpcoesScene.js";
 import InstrucoesScene from "./scenes/InstrucoesScene.js";
-import GameScene from "./scenes/GameScene.js"; // se ainda não tiveres, podes deixar vazio por enquanto
+import GameScene from "./scenes/GameScene.js";
+import Player from "./scenes/Player.js";
 
 const config = {
     type: Phaser.AUTO,
@@ -12,6 +13,13 @@ const config = {
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: false
+        }
     },
 
     scene: [
