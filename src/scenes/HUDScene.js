@@ -3,13 +3,20 @@
 export default class HUDScene extends Phaser.Scene {
     
     dashBar;
-    towerHealthBar; 
-    textGold; 
+    towerHealthBar;
+    textChips; 
+    textKills; 
+    // towerHealthTitleBg foi removido
+    towerHealthBarTitle; 
     
     gameScene;
 
     constructor() {
         super({ key: 'HUDScene' }); 
+    }
+
+    preload() {
+        this.load.image('chipIcon', 'assets/images/interface/Chip.png'); 
     }
 
     create() {
@@ -20,61 +27,91 @@ export default class HUDScene extends Phaser.Scene {
             return;
         }
 
-        // 1. BARRA DE RECARGA (DASH - Azul)
+        // 1. BARRA DE VIDA DA TORRE (Verde)
+        this.towerHealthBar = this.add.graphics();
+        
+        // CÓDIGO REMOVIDO: Não adiciona o fundo preto
+        // this.towerHealthTitleBg = this.add.graphics().setScrollFactor(0);
+        // this.towerHealthTitleBg.fillStyle(0x000000, 0.7); 
+        // this.towerHealthTitleBg.fillRect(960 / 2 - 100, 5, 200, 25);
+        
+        this.towerHealthBarTitle = this.add.text(960 / 2, 12, 'HOPE HEALTH', { 
+            fontSize: '14px', 
+            fill: '#ffffff', 
+            fontFamily: 'Arial, sans-serif'
+        }).setOrigin(0.5).setScrollFactor(0); // Título flutua
+        
+        this.updateTowerHealthBar(1); 
+        
+        // 2. BARRA DE RECARGA (DASH - Azul)
         this.dashBar = this.add.graphics();
         this.dashBar.setVisible(false); 
         
-        // 2. BARRA DE VIDA DA TORRE (Verde)
-        this.towerHealthBar = this.add.graphics();
-        this.updateTowerHealthBar(1); 
+        // 3. TEXTO E ÍCONES HUD
         
-        // 3. TEXTO HUD (Gold/Chips e Kills)
-        this.textGold = this.add.text(10, 10, 'Chips: 0', { fontSize: '16px', fill: '#fff' }).setScrollFactor(0);
-        this.add.text(10, 30, 'Kills: 0', { fontSize: '16px', fill: '#fff' }).setScrollFactor(0);
+        // ÍCONE DO CHIP
+        this.add.image(20, 45, 'chipIcon')
+            .setScrollFactor(0)
+            .setOrigin(0.5)
+            .setScale(0.035); 
+        
+        // TEXTO DE CHIPS (MAIOR E AMARELO)
+        this.textChips = this.add.text(45, 35, '0', { 
+            fontSize: '28px', 
+            fill: '#ffdf00', 
+            fontFamily: 'Verdana, sans-serif'
+        }).setScrollFactor(0);
+        
+        // TEXTO DE KILLS (MAIOR E BRANCO)
+        this.textKills = this.add.text(10, 90, 'KILLS: 0', { 
+            fontSize: '20px', 
+            fill: '#cccccc', 
+            fontFamily: 'Verdana, sans-serif'
+        }).setScrollFactor(0);
     }
 
     update() {
         const player = this.gameScene.player;
 
         if (player) {
-            // Atualizar a Vida da Torre
             const towerRatio = this.gameScene.towerHealth / 100;
             this.updateTowerHealthBar(towerRatio);
             
-            // Atualizar a Barra de Dash
             const dashRatio = 1 - (player.dashTimer / player.dashCooldown);
             this.updateDashBar(dashRatio);
             
-            // Lógica de visibilidade do Dash Bar
             if (player.dashTimer > 0) {
                 this.dashBar.setVisible(true); 
             } else if (dashRatio === 1) {
                 this.dashBar.setVisible(false); 
             }
+            
+            this.textChips.setText('0'); 
+            this.textKills.setText('KILLS: 0');
         }
     }
     
-    // --- FUNÇÃO 1: BARRA DE VIDA DA TORRE (Verde) ---
+    // --- FUNÇÃO 1: BARRA DE VIDA DA TORRE (Limpa e Longa) ---
     updateTowerHealthBar(ratio) {
-        const barWidth = 100; 
-        const barHeight = 10;
+        const barWidth = 400; 
+        const barHeight = 15; 
         const xOffset = 960 / 2; // Centro do ecrã
-        const yOffset = 10; 
+        const yOffset = 40; 
 
         this.towerHealthBar.clear();
         
-        // Fundo Vermelho (Dano/Vazio)
-        this.towerHealthBar.fillStyle(0xff0000); 
+        // Fundo Vermelho
+        this.towerHealthBar.fillStyle(0x880000); 
         this.towerHealthBar.fillRect(xOffset - (barWidth / 2), yOffset, barWidth, barHeight);
         
-        // Barra Verde (Vida)
-        this.towerHealthBar.fillStyle(0x00ff00); // COR VERDE
+        // Barra Verde
+        this.towerHealthBar.fillStyle(0x00ff00); 
         this.towerHealthBar.fillRect(xOffset - (barWidth / 2), yOffset, barWidth * ratio, barHeight);
         
         this.towerHealthBar.setScrollFactor(0); 
     }
 
-    // --- FUNÇÃO 2: BARRA DE RECARGA (Azul) ---
+    // --- FUNÇÃO 2: BARRA DE RECARGA (Azul Limpa) ---
     updateDashBar(ratio) {
         const barWidth = 100; 
         const barHeight = 8;
@@ -83,11 +120,11 @@ export default class HUDScene extends Phaser.Scene {
 
         this.dashBar.clear();
         
-        // Fundo Cinzento (Vazio)
+        // Fundo Cinzento
         this.dashBar.fillStyle(0x555555);
         this.dashBar.fillRect(xOffset, yOffset, barWidth, barHeight);
         
-        // Barra Azul (Recarga)
+        // Barra Azul
         this.dashBar.fillStyle(0x0000ff);
         this.dashBar.fillRect(xOffset, yOffset, barWidth * ratio, barHeight);
         
