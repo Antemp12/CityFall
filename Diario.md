@@ -26,4 +26,17 @@ Solução:
     - 
 Decisões:
     - Refazer o mapa tudo de novo
+
+Sessão 3 – 04 de dezembro de 2025
+Objetivo: 
+Atividades realizadas:
+    - 
+    - 
+    - 
+Problemas:
+    - 
+Solução:
+    - 
+Decisões:
+    - 
     

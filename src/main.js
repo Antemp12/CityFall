@@ -1,24 +1,26 @@
-// main.js
+import MenuScene from "./scenes/MenuScene.js";
+import OpcoesScene from "./scenes/OpcoesScene.js";
+import InstrucoesScene from "./scenes/InstrucoesScene.js";
+import GameScene from "./scenes/GameScene.js"; // se ainda não tiveres, podes deixar vazio por enquanto
 
-import Menu from './scenes/Menu.js'; 
-import NivelJogoScene from './scenes/NivelJogoScene.js'; // Adicione a Scene de Jogo
-
-// Definição das configurações do jogo
 const config = {
     type: Phaser.AUTO,
-    width: 1280, 
-    height: 720, 
+    width: 960,
+    height: 540,
+    backgroundColor: "#000000",
+
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+
     scene: [
-        Menu, 
-        NivelJogoScene // Scene de Jogo
-    ],
-    physics: {
-        default: 'arcade', // Usando Arcade Physics
-        arcade: {
-            debug: false 
-        }
-    }
+        MenuScene,
+        OpcoesScene,
+        InstrucoesScene,
+        GameScene
+    ]
 };
 
-// Criação da instância do jogo
 const game = new Phaser.Game(config);
+export default game;
