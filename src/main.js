@@ -3,6 +3,7 @@ import OpcoesScene from "./scenes/OpcoesScene.js";
 import InstrucoesScene from "./scenes/InstrucoesScene.js";
 import GameScene from "./scenes/GameScene.js";
 import Player from "./scenes/Player.js";
+import HUDScene from "./scenes/HUDScene.js";
 
 const config = {
     type: Phaser.AUTO,
@@ -26,7 +27,8 @@ const config = {
         MenuScene,
         OpcoesScene,
         InstrucoesScene,
-        GameScene
+        GameScene,
+        HUDScene
     ]
 };
 
