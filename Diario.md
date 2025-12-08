@@ -39,4 +39,29 @@ Solução:
     - 
 Decisões:
     - 
-    
+
+Sessão 4 – 05 de dezembro de 2025
+Objetivo: 
+Atividades realizadas:
+    - 
+    - 
+    - 
+Problemas:
+    - 
+Solução:
+    - 
+Decisões:
+    - 
+
+Sessão 5 – 06 de dezembro de 2025
+Objetivo: 
+Atividades realizadas:
+    - 
+    - 
+    - 
+Problemas:
+    - 
+Solução:
+    - 
+Decisões:
+    - 

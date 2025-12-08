@@ -1,133 +1,242 @@
 // Player.js
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    
-    // Propriedades de Dash
-    isDashing = false;
-    dashDuration = 100; 
-    dashCooldown = 1000; 
-    dashTimer = 0; 
-    
+
+    // ESTADOS
+    isAttacking = false;
+    enemiesHitInAttack = new Set();
+
+    maxHealth = 10;
+    health = 10;
+    isDead = false;
+    isInvincible = false;
+
+    speed = 200;
+
+    // Direção real do ataque
+    facing = "down";
+
+
     constructor(scene, x, y, spriteKey) {
         super(scene, x, y, spriteKey);
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        // --- Configurações Visuais e Físicas ---
-        this.setOrigin(0.5); 
-        this.setCollideWorldBounds(true); 
-        this.setDrag(500, 500); 
-        this.body.setMaxVelocity(250); 
-        
-        // Ajuste para sprite 48x64 pixels
-        this.body.setSize(24, 48); 
-        this.body.setOffset(12, 8); 
-        
-        // --- Animações ---
+        this.setOrigin(0.5);
+        this.setCollideWorldBounds(true);
+
+        this.body.setSize(24,48);
+        this.body.setOffset(12,8);
+
+        // INPUTS
+        this.keyW = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyA = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyS = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.keyD = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.spaceKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        // HITBOX DE ATAQUE
+        this.attackHitbox = scene.add.rectangle(0,0,50,50,0xff0000,0);
+        scene.physics.add.existing(this.attackHitbox);
+
+        this.attackHitbox.body.setAllowGravity(false);
+        this.attackHitbox.body.setEnable(false);
+
         this.createAnimations(scene);
-        this.anims.play('idle_down', true); 
+        this.anims.play("idle_down", true);
     }
 
-    // --- Criação das Animações ---
+
+
+    // ===========================
+    // ANIMAÇÕES
+    // ===========================
     createAnimations(scene) {
-        const frameRate = 6; 
-        const walkRate = 12; 
         
-        // IDLE
-        scene.anims.create({ key: 'idle_down', frames: scene.anims.generateFrameNumbers('Idle', { start: 0, end: 7 }), frameRate: frameRate, repeat: -1 });
-        scene.anims.create({ key: 'idle_up', frames: scene.anims.generateFrameNumbers('Idle', { start: 8, end: 15 }), frameRate: frameRate, repeat: -1 });
-        scene.anims.create({ key: 'idle_side', frames: scene.anims.generateFrameNumbers('Idle', { start: 16, end: 23 }), frameRate: frameRate, repeat: -1 });
-        
-        // WALK
-        scene.anims.create({ key: 'walk_down', frames: scene.anims.generateFrameNumbers('walk', { start: 0, end: 7 }), frameRate: walkRate, repeat: -1 });
-        scene.anims.create({ key: 'walk_up', frames: scene.anims.generateFrameNumbers('walk', { start: 25, end: 32 }), frameRate: walkRate, repeat: -1 });
-        scene.anims.create({ key: 'walk_side', frames: scene.anims.generateFrameNumbers('walk', { start: 16, end: 23 }), frameRate: walkRate, repeat: -1 });
-        
-        // DASH
-        scene.anims.create({ key: 'dash_anim', frames: scene.anims.generateFrameNumbers('Dash', { start: 8, end: 15 }), frameRate: 30, repeat: 0 });
+        scene.anims.create({
+            key: "idle_down",
+            frames: scene.anims.generateFrameNumbers("Idle", { start:0, end:7 }),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        scene.anims.create({
+            key: "walk_down",
+            frames: scene.anims.generateFrameNumbers("walk", { start:0, end:7 }),
+            frameRate: 12,
+            repeat: -1
+        });
+
+        scene.anims.create({
+            key: "walk_up",
+            frames: scene.anims.generateFrameNumbers("walk", { start:25, end:32 }),
+            frameRate: 12,
+            repeat: -1
+        });
+
+        scene.anims.create({
+            key: "walk_side",
+            frames: scene.anims.generateFrameNumbers("walk", { start:16, end:23 }),
+            frameRate: 12,
+            repeat: -1
+        });
+
+
+        // ATAQUE (apenas 2 frames)
+        scene.anims.create({
+            key: "attack_swing",
+            frames: scene.anims.generateFrameNumbers("attack_anim", { start:0, end:1 }),
+            frameRate: 10,
+            repeat: 0
+        });
     }
 
-    // --- Lógica de Atualização (Movimento, Dash e Animação) ---
-    update(cursors, shiftKey) { 
-        const speed = 200;
-        let isMoving = false;
-        let newAnimKey = 'idle_down'; 
-        
-        // --- 1. Gestão do Dash Timer ---
-        if (this.dashTimer > 0) {
-            this.dashTimer -= this.scene.game.loop.delta; 
-            if (this.dashTimer < 0) this.dashTimer = 0;
+
+
+    // ===========================
+    // DANO
+    // ===========================
+    takeDamage(amount) {
+
+        if (this.isInvincible || this.isDead) return;
+
+        this.health -= amount;
+
+        if (this.health <= 0) {
+            this.isDead = true;
+            this.health = 0;
+            this.scene.events.emit("gameover");
+            return;
         }
 
-        // --- 2. Iniciar o DASH ---
-        if (shiftKey.isDown && !this.isDashing && this.dashTimer === 0) {
-            this.isDashing = true;
-            this.dashTimer = this.dashCooldown; 
-            
-            let dirX = 0;
-            let dirY = 0;
-            
-            if (cursors.left.isDown) dirX = -1; else if (cursors.right.isDown) dirX = 1;
-            if (cursors.up.isDown) dirY = -1; else if (cursors.down.isDown) dirY = 1;
+        this.isInvincible = true;
 
-            if (dirX === 0 && dirY === 0) {
-                dirX = this.flipX ? -1 : 1; 
-            }
+        this.scene.time.delayedCall(400,
+            () => this.isInvincible = false
+        );
 
-            const dashImpulse = 700;
-            
-            this.body.setDrag(0); 
-            this.setVelocity(dirX * dashImpulse, dirY * dashImpulse);
+        this.scene.tweens.add({
+            targets: this,
+            alpha: 0.3,
+            duration: 50,
+            yoyo: true,
+            repeat: 4
+        });
+    }
 
-            if (dirX !== 0 && dirY !== 0) {
-                 this.body.velocity.normalize().scale(dashImpulse);
-            }
-            
-            this.anims.play('dash_anim', true);
 
-            this.scene.time.delayedCall(this.dashDuration, () => {
-                this.isDashing = false;
-                this.setVelocity(0); 
-                this.body.setDrag(500); 
-            });
-            return; 
+
+    // ===========================
+    // ATAQUE DIRECIONAL
+    // ===========================
+    handleAttack() {
+        
+        if (this.isAttacking || this.isDead) return;
+
+        this.isAttacking = true;
+        this.enemiesHitInAttack.clear();
+
+        this.attackHitbox.body.setEnable(true);
+
+        this.anims.play("attack_swing");
+
+        const halfW = this.width * 0.5;
+        const halfH = this.height * 0.5;
+
+        const offset = 35;
+
+        switch(this.facing) {
+            case "left":
+                this.attackHitbox.setPosition(this.x - halfW - offset, this.y);
+                break;
+
+            case "right":
+                this.attackHitbox.setPosition(this.x + halfW + offset, this.y);
+                break;
+
+            case "up":
+                this.attackHitbox.setPosition(this.x, this.y - halfH - offset);
+                break;
+
+            case "down":
+                this.attackHitbox.setPosition(this.x, this.y + halfH + offset);
+                break;
         }
 
-        // --- 3. Movimento Normal (Ignorado durante o Dash) ---
-        if (this.isDashing) return; 
-        
-        this.setVelocity(0); 
 
-        // Movimento Horizontal e Flip
+        this.scene.time.delayedCall(150,
+            () => this.attackHitbox.body.setEnable(false)
+        );
+
+
+        this.once("animationcomplete-attack_swing", () => {
+            this.isAttacking = false;
+        });
+    }
+
+
+
+    // ===========================
+    // UPDATE
+    // ===========================
+    update(cursors) {
+        
+        if (this.isDead) return;
+
+        if (this.isAttacking) {
+            this.setVelocity(0);
+            return;
+        }
+
+        let moving = false;
+        let anim = "idle_down";
+
+        this.setVelocity(0);
+
+        // LEFT
         if (cursors.left.isDown) {
-            this.setVelocityX(-speed); this.setFlipX(false); newAnimKey = 'walk_side'; isMoving = true;
-        } else if (cursors.right.isDown) {
-            this.setVelocityX(speed); this.setFlipX(true); newAnimKey = 'walk_side'; isMoving = true;
-        }
-        
-        // Movimento Vertical
-        if (cursors.up.isDown) {
-            this.setVelocityY(-speed); newAnimKey = 'walk_up'; isMoving = true;
-        } else if (cursors.down.isDown) {
-            this.setVelocityY(speed); newAnimKey = 'walk_down'; isMoving = true;
+            this.setVelocityX(-this.speed);
+            this.setFlipX(false);
+            anim = "walk_side";
+            this.facing = "left";
+            moving = true;
         }
 
-        this.body.velocity.normalize().scale(isMoving ? speed : 0);
-        
-        // --- 4. Animação ---
-        if (!isMoving) {
-            if (this.anims.currentAnim.key.includes('walk')) {
-                newAnimKey = this.anims.currentAnim.key.replace('walk', 'idle');
-            } else if (!this.anims.currentAnim.key.includes('idle')) {
-                newAnimKey = 'idle_down';
-            } else {
-                newAnimKey = this.anims.currentAnim.key;
-            }
+        // RIGHT
+        else if (cursors.right.isDown) {
+            this.setVelocityX(this.speed);
+            this.setFlipX(true);
+            anim = "walk_side";
+            this.facing = "right";
+            moving = true;
         }
-        
-        if (this.anims.currentAnim.key !== newAnimKey) {
-            this.anims.play(newAnimKey, true);
+
+        // UP
+        if (cursors.up.isDown) {
+            this.setVelocityY(-this.speed);
+            anim = "walk_up";
+            this.facing = "up";
+            moving = true;
+        }
+
+        // DOWN
+        else if (cursors.down.isDown) {
+            this.setVelocityY(this.speed);
+            anim = "walk_down";
+            this.facing = "down";
+            moving = true;
+        }
+
+        // Normaliza velocidade
+        this.body.velocity.normalize().scale(moving ? this.speed : 0);
+
+        if (!moving) {
+            anim = anim.replace("walk", "idle");
+        }
+
+        if (this.anims.currentAnim.key !== anim) {
+            this.anims.play(anim, true);
         }
     }
 }
