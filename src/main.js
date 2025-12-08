@@ -1,3 +1,4 @@
+import StoryScene from "./scenes/StoryScene.js";
 import MenuScene from "./scenes/MenuScene.js";
 import OpcoesScene from "./scenes/OpcoesScene.js";
 import InstrucoesScene from "./scenes/InstrucoesScene.js";
@@ -5,6 +6,7 @@ import GameScene from "./scenes/GameScene.js";
 import HUDScene from "./scenes/HUDScene.js";
 import TowerScene from "./scenes/TowerScene.js";
 import UpgradeScene from "./scenes/UpgradeScene.js";
+import GameOverScene from "./scenes/GameOverScene.js";
 
 const config = {
     type: Phaser.AUTO,
@@ -26,12 +28,14 @@ const config = {
 
     scene: [
         MenuScene,
+        StoryScene,
         OpcoesScene,
         InstrucoesScene,
         GameScene,
         HUDScene,
         TowerScene,
-        UpgradeScene
+        UpgradeScene,
+        GameOverScene
     ]
 };
 

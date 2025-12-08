@@ -14,6 +14,32 @@ export default class TowerScene extends Phaser.Scene {
         this.tower = data.tower;
     }
 
+    toggleUpgradeScene(player, tower, callingScene) {
+        this.isUpgradeMenuOpen = true;
+        this.scene.pause('TowerScene');
+
+        const data = { player: player, tower: tower, callingScene: callingScene };
+        const upgradeScene = this.scene.get('UpgradeScene');
+
+        if (upgradeScene) {
+            const status = upgradeScene.scene.settings.status;
+            console.log("TowerScene: UpgradeScene status:", status);
+
+            if (status === Phaser.Scenes.SceneManager.PAUSED) {
+                console.log("TowerScene: Resuming UpgradeScene from PAUSED state.");
+                this.scene.resume('UpgradeScene', data);
+            } else if (status === Phaser.Scenes.SceneManager.RUNNING) {
+                console.log("TowerScene: Attempting to resume UpgradeScene from RUNNING state (unexpected).");
+                this.scene.resume('UpgradeScene', data);
+            } else { // SHUTDOWN, PENDING, or other initial states
+                console.log("TowerScene: Launching UpgradeScene for the first time or after shutdown.");
+                this.scene.launch('UpgradeScene', data);
+            }
+        } else { // Scene does not exist yet (first time)
+            this.scene.launch('UpgradeScene', data);
+        }
+    }
+
     preload() {
         // Carregar o mapa em formato JSON
         this.load.tilemapTiledJSON('mapa-torre', 'assets/images/mapa2/Mapa2.json?v=' + Date.now());
@@ -56,16 +82,9 @@ export default class TowerScene extends Phaser.Scene {
         // Colisão com o núcleo para abrir o menu de upgrades
         this.physics.add.collider(this.player, nucleoLayer, (player, tile) => {
             // nucleoUp firstgid is 401
-            if (tile.index >= 401 && !this.isUpgradeMenuOpen) {
-                this.isUpgradeMenuOpen = true;
-                this.scene.pause('TowerScene');
-                this.scene.launch('UpgradeScene', { 
-                    player: this.player, 
-                    tower: this.tower, 
-                    callingScene: 'TowerScene' 
-                });
-            }
-        }, null, this);
+                        if (tile.index >= 401 && !this.isUpgradeMenuOpen) {
+                            this.toggleUpgradeScene(this.player, this.tower, 'TowerScene');
+                        }        }, null, this);
         
         // UI e Porta de Saída
         this.add.text(10, 10, 'Carrega na tecla U para upgrades.\nPressione Left Click Mouse para sair', { font: '16px Arial', fill: '#ffffff' }).setScrollFactor(0);
@@ -92,13 +111,7 @@ export default class TowerScene extends Phaser.Scene {
         this.input.keyboard.on("keydown-SPACE", this.player.handleAttack, this.player);
         this.input.keyboard.on('keydown-U', () => {
             if (!this.isUpgradeMenuOpen) {
-                this.isUpgradeMenuOpen = true;
-                this.scene.pause('TowerScene');
-                this.scene.launch('UpgradeScene', {
-                    player: this.player,
-                    tower: this.tower,
-                    callingScene: 'TowerScene'
-                });
+                this.toggleUpgradeScene(this.player, this.tower, 'TowerScene');
             }
         });
 
@@ -108,11 +121,15 @@ export default class TowerScene extends Phaser.Scene {
 
         // Resetar flag quando a cena for resumida
         this.events.on('resume', () => {
+            console.log("TowerScene: Resumed. isUpgradeMenuOpen was:", this.isUpgradeMenuOpen);
             this.isUpgradeMenuOpen = false;
+            console.log("TowerScene: isUpgradeMenuOpen set to false.");
+            this.scene.setVisible(true);
         });
     }
 
     update() {
+        console.log("TowerScene: update()");
         if (this.player && !this.isUpgradeMenuOpen) {
             this.player.update(this.cursors);
         }

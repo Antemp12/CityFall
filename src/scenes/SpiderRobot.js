@@ -59,7 +59,7 @@ export default class SpiderRobot extends Enemy {
         if (this.targets.primary && this.targets.primary.health > 0) {
             target = this.targets.primary;
         } 
-        else if (this.targets.secondary) {
+        else if (this.targets.secondary && this.targets.secondary.health > 0) {
             target = this.targets.secondary;
         }
 

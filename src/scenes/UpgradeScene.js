@@ -58,6 +58,7 @@ export default class UpgradeScene extends Phaser.Scene {
         this.player = data.player;
         this.tower = data.tower;
         this.callingScene = data.callingScene || 'GameScene';
+        this.events.on('resume', this.onResume, this);
     }
 
     preload() {
@@ -66,86 +67,120 @@ export default class UpgradeScene extends Phaser.Scene {
     }
 
     create() {
-        const cam = this.cameras.main;
-        const centerX = cam.width / 2;
-        const centerY = cam.height / 2;
+        // This scene can be created once and then woken/slept.
+        // If this is the first time create is called, set up the UI.
+        if (!this.uiCreated) {
+            const cam = this.cameras.main;
+            const centerX = cam.width / 2;
+            const centerY = cam.height / 2;
 
-        this.chips = this.registry.get("chips") || 0;
+            this.add.rectangle(centerX, centerY, 600, 500, 0x000000, 0.8).setStrokeStyle(2, 0xffffff);
 
-        this.add.rectangle(centerX, centerY, 600, 500, 0x000000, 0.8).setStrokeStyle(2, 0xffffff);
-
-        this.add.text(centerX, centerY - 200, "UPGRADES", {
-            fontSize: "40px",
-            fill: "#ffffff"
-        }).setOrigin(0.5);
-
-        this.chipsText = this.add.text(centerX, centerY - 150, `Chips: ${this.chips}`, {
-            fontSize: "24px",
-            fill: "#ffff00"
-        }).setOrigin(0.5);
-
-        // --- UPGRADES ---
-        let upgradeConfigs = [
-            {
-                name: "PlayerHP",
-                baseCost: 20,
-                costIncrement: 10,
-                effect: () => this.player.maxHealth += 20,
-                icon: 'heart_icon',
-                description: "+20 HP"
-            },
-            {
-                name: "PlayerSpeed",
-                baseCost: 25,
-                costIncrement: 15,
-                effect: () => this.player.speed += 10,
-                icon: 'boot_icon',
-                description: "+10 Speed"
-            },
-        ];
-
-        if (this.tower) {
-            upgradeConfigs.push({
-                name: "TowerHP",
-                baseCost: 40,
-                costIncrement: 20,
-                effect: () => this.tower.health += 100,
-                icon: 'heart_icon',
-                description: "+100 tower HP"
-            });
-        }
-
-        this.upgrades = upgradeConfigs.map(config => {
-            const level = this.registry.get(`upgrade_level_${config.name}`) || 0;
-            return new Upgrade(this, config.name, { ...config, level });
-        });
-
-        let x = centerX - (this.upgrades.length - 1) * 150 / 2;
-        let y = centerY;
-
-        this.upgrades.forEach((upgrade, i) => {
-            const icon = this.add.image(x, y, upgrade.icon).setScale(0.5).setInteractive();
-            icon.on("pointerdown", () => this.buy(upgrade, i));
-
-            const text = this.add.text(x, y + 100, "", {
-                fontSize: "16px",
-                align: "center",
+            this.add.text(centerX, centerY - 200, "UPGRADES", {
+                fontSize: "40px",
                 fill: "#ffffff"
             }).setOrigin(0.5);
-            this.upgradeTexts.push(text);
 
-            this.updateUpgradeText(upgrade, i);
+            this.chipsText = this.add.text(centerX, centerY - 150, `Chips: ${this.chips}`, {
+                fontSize: "24px",
+                fill: "#ffff00"
+            }).setOrigin(0.5);
 
-            x += 150;
+            // --- UPGRADES ---
+            let upgradeConfigs = [
+                {
+                    name: "PlayerHP",
+                    baseCost: 20,
+                    costIncrement: 10,
+                    effect: () => this.player.maxHealth += 20,
+                    icon: 'heart_icon',
+                    description: "+20 HP"
+                },
+                {
+                    name: "PlayerSpeed",
+                    baseCost: 25,
+                    costIncrement: 15,
+                    effect: () => this.player.speed += 10,
+                    icon: 'boot_icon',
+                    description: "+10 Speed"
+                },
+            ];
+
+            if (this.tower) {
+                upgradeConfigs.push({
+                    name: "TowerHP",
+                    baseCost: 40,
+                    costIncrement: 20,
+                    effect: () => this.tower.health += 100,
+                    icon: 'heart_icon',
+                    description: "+100 tower HP"
+                });
+            }
+
+            this.upgrades = upgradeConfigs.map(config => {
+                const level = this.registry.get(`upgrade_level_${config.name}`) || 0;
+                return new Upgrade(this, config.name, { ...config, level });
+            });
+
+            let x = centerX - (this.upgrades.length - 1) * 150 / 2;
+            let y = centerY;
+
+            this.upgrades.forEach((upgrade, i) => {
+                const icon = this.add.image(x, y, upgrade.icon).setScale(0.5).setInteractive();
+                icon.on("pointerdown", () => this.buy(upgrade, i));
+
+                const text = this.add.text(x, y + 100, "", {
+                    fontSize: "16px",
+                    align: "center",
+                    fill: "#ffffff"
+                }).setOrigin(0.5);
+                this.upgradeTexts.push(text);
+
+                this.updateUpgradeText(upgrade, i);
+
+                x += 150;
+            });
+
+            this.add.text(centerX, centerY + 200, "PRESS U TO EXIT", {
+                fontSize: "22px",
+                fill: "#ffff00"
+            }).setOrigin(0.5);
+            this.uiCreated = true;
+        }
+
+        // Always update text and enable input when scene is activated (launched or woken)
+        this.input.keyboard.on("keydown-U", this.exit, this);
+        this.scene.setVisible(true);
+        this.updateAllUpgradeTexts();
+        this.chips = this.registry.get("chips") || 0;
+
+    }
+
+    onResume(sys, data) {
+        console.log("UpgradeScene: Resuming. Data received:", data);
+        this.player = data.player;
+        this.tower = data.tower;
+        this.callingScene = data.callingScene;
+
+        console.log("UpgradeScene: Player object on resume:", this.player);
+        console.log("UpgradeScene: Tower object on resume:", this.tower);
+
+        // Re-initialize upgrades to get latest registry values if necessary
+        this.upgrades.forEach(upgrade => {
+            upgrade.level = this.registry.get(`upgrade_level_${upgrade.name}`) || 0;
         });
 
-        this.add.text(centerX, centerY + 200, "PRESS ENTER TO EXIT", {
-            fontSize: "22px",
-            fill: "#ffff00"
-        }).setOrigin(0.5);
+        this.input.keyboard.on("keydown-U", this.exit, this);
+        this.scene.setVisible(true);
+        this.updateAllUpgradeTexts();
+        this.chips = this.registry.get("chips") || 0;
+        this.chipsText.setText(`Chips: ${this.chips}`);
+    }
 
-        this.input.keyboard.on("keydown-ENTER", this.exit, this);
-        this.scene.pause(this.callingScene);
+    updateAllUpgradeTexts() {
+        this.upgrades.forEach((upgrade, i) => {
+            this.updateUpgradeText(upgrade, i);
+        });
     }
 
     updateUpgradeText(upgrade, index) {
@@ -168,7 +203,12 @@ export default class UpgradeScene extends Phaser.Scene {
     }
 
     exit() {
+        console.log("UpgradeScene: Exiting...");
+        this.input.keyboard.off("keydown-U", this.exit, this);
+        this.scene.setVisible(false);
+        console.log("UpgradeScene: Resuming callingScene and then pausing itself...");
         this.scene.resume(this.callingScene);
-        this.scene.stop();
+        this.scene.pause();
+        console.log("UpgradeScene: Exit method finished.");
     }
 }

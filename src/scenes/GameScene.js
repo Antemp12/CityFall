@@ -55,6 +55,9 @@ export default class GameScene extends Phaser.Scene {
 
         // CHIP
         this.load.image("chip", "assets/images/interface/Chip.png");
+
+        // AUDIO
+        this.load.audio("gameSong", "assets/Sons/GameSong.mp3");
     }
 
 
@@ -142,9 +145,9 @@ export default class GameScene extends Phaser.Scene {
         this.flyRobots = this.physics.add.group({ classType: FlyRobot, runChildUpdate:true });
 
         
-        this.enemies.get(800,100,"robot_idle",targets);
-        this.spiderRobots.get(100,500,"enemy_spider",targets);
-        this.flyRobots.get(500,100,"enemy_fly",targets);
+        this.enemies.add(new Enemy(this, 800, 100, "robot_idle", targets));
+        this.spiderRobots.add(new SpiderRobot(this, 100, 500, "enemy_spider", targets));
+        this.flyRobots.add(new FlyRobot(this, 500, 100, "enemy_fly", targets));
 
         // Listen for robot killed event
         this.events.off("robot_killed", this.collectChips, this);
@@ -221,6 +224,19 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
         this.cameras.main.startFollow(this.player);
 
+        // Unlock audio context
+        this.sound.unlock();
+
+        // Play the game song
+        this.gameSong = this.sound.add("gameSong");
+        if (this.gameSong) {
+            this.gameSong.setVolume(1);
+            this.gameSong.play({ loop: true });
+            console.log("Game song is playing");
+        } else {
+            console.log("Game song not loaded");
+        }
+
     }
 
 
@@ -272,91 +288,27 @@ export default class GameScene extends Phaser.Scene {
 
 
     handleGameOver(){
-        this.physics.pause();
-       this.scene.stop("HUDScene");
+        if (this.isGameOver) return; // Prevent multiple calls
+
         this.isGameOver = true;
+        this.physics.pause();
+
+        // Stop the game song
+        if (this.gameSong) {
+            this.gameSong.stop();
+        }
 
         const timePassed = Math.floor((this.time.now - this.startTime) / 1000);
         const waveEnded = this.waveManager ? this.waveManager.wave - 1 : 0;
 
-        // Background rectangle for better visibility
-        const bg = this.add.rectangle(
-            this.cameras.main.midPoint.x,
-            this.cameras.main.midPoint.y,
-            600,
-            400,
-            0x000000,
-            0.8
-        ).setOrigin(0.5);
-
-        this.add.text(
-            this.cameras.main.midPoint.x,
-            this.cameras.main.midPoint.y - 150,
-            "GAME OVER",
-            {
-                fontSize:"64px",
-                fill:"#ff0000",
-                fontStyle:"bold"
-            }
-        ).setOrigin(0.5);
-
-        this.add.text(
-            this.cameras.main.midPoint.x,
-            this.cameras.main.midPoint.y - 50,
-            `Kills: ${this.kills}\nChips: ${this.playerChips}\nTime: ${timePassed}s\nWave: ${waveEnded}`,
-            {
-                fontSize:"24px",
-                fill:"#ffffff",
-                align:"center"
-            }
-        ).setOrigin(0.5);
-
-        // Restart button
-        const restartButton = this.add.text(
-            this.cameras.main.midPoint.x - 100,
-            this.cameras.main.midPoint.y + 100,
-            "Restart",
-            {
-                fontSize:"32px",
-                fill:"#00ff00",
-                fontStyle:"bold"
-            }
-        ).setOrigin(0.5).setInteractive();
-
-        restartButton.on('pointerdown', () => {
-            this.scene.restart();
-        });
-
-        restartButton.on('pointerover', () => {
-            restartButton.setStyle({ fill: '#ffff00' });
-        });
-
-        restartButton.on('pointerout', () => {
-            restartButton.setStyle({ fill: '#00ff00' });
-        });
-
-        // Main Menu button
-        const menuButton = this.add.text(
-            this.cameras.main.midPoint.x + 100,
-            this.cameras.main.midPoint.y + 100,
-            "Main Menu",
-            {
-                fontSize:"32px",
-                fill:"#00ff00",
-                fontStyle:"bold"
-            }
-        ).setOrigin(0.5).setInteractive();
-
-        menuButton.on('pointerdown', () => {
-            window.location.reload();
-        });
-
-        menuButton.on('pointerover', () => {
-            menuButton.setStyle({ fill: '#ffff00' });
-        });
-
-        menuButton.on('pointerout', () => {
-            menuButton.setStyle({ fill: '#00ff00' });
+        // PAUSA A SCENE ATUAL E ABRE O MENU DE GAME OVER
+        this.scene.pause('HUDScene');
+        this.scene.pause('GameScene');
+        this.scene.launch('GameOverScene', {
+            kills: this.kills,
+            chips: this.playerChips,
+            time: timePassed,
+            wave: waveEnded
         });
     }
 

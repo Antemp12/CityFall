@@ -10,6 +10,13 @@ export default class MenuScene extends Phaser.Scene {
     preload() {
         // Altere este caminho e nome de ficheiro se o seu vídeo estiver noutro local!
         this.load.video('menuVideo', 'assets/images/menu/cityFall.mp4'); 
+
+        // Add an error listener for the video loader
+        this.load.on('loaderror', function (file) {
+            if (file.key === 'menuVideo') {
+                console.error('Failed to load menuVideo:', file.src);
+            }
+        });
     }
 
     // --- 2. CREATE: Criação de Objetos (Vídeo e Botões) ---
@@ -24,10 +31,12 @@ export default class MenuScene extends Phaser.Scene {
         // =================================================================
         
         const video = this.add.video(centerX, centerY, 'menuVideo');
+        this.menuVideo = video; // Store video as a class property
+        console.log("Video object created:", video); // Log the video object
         
         // Usa o evento 'readyforplay' para garantir que o vídeo está pronto para ser dimensionado e reproduzido.
         video.on('readyforplay', () => {
-            
+            console.log('Video dimensions:', video.videoWidth, video.videoHeight); // Log dimensions
             // Lógica de dimensionamento (Cover method): Mantém a proporção e preenche a tela.
             const scaleX = width / video.videoWidth;
             const scaleY = height / video.videoHeight;
@@ -45,7 +54,7 @@ export default class MenuScene extends Phaser.Scene {
         // =================================================================
 
         // Título
-        this.add.text(centerX, 100, 'O MEU JOGO', { 
+        this.add.text(centerX, 100, 'City Fall', { 
             fontSize: '56px', 
             fill: '#ffffff',
             fontStyle: 'bold'
@@ -76,6 +85,9 @@ export default class MenuScene extends Phaser.Scene {
             });
 
             button.on('pointerdown', () => {
+                if (this.menuVideo && !this.menuVideo.isPlaying) {
+                    this.menuVideo.play(true, true); 
+                }
                 // Inicia a cena correspondente
                 this.scene.start(targetScene); 
             });
@@ -87,7 +99,8 @@ export default class MenuScene extends Phaser.Scene {
         // 4. CRIAÇÃO DOS BOTÕES
         // =================================================================
         
-        createButton('COMEÇAR JOGO', 'GameScene'); 
+        createButton('COMEÇAR JOGO', 'GameScene');
+        createButton('INICIAL', 'StoryScene');
         createButton('INSTRUÇÕES', 'InstrucoesScene'); 
         createButton('OPÇÕES', 'OpcoesScene'); 
     }

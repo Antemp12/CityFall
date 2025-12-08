@@ -80,7 +80,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (!scene.anims.exists("attack_swing")){
             scene.anims.create({
                 key:"attack_swing",
-                frames: scene.anims.generateFrameNumbers("attack_anim",{start:0,end:1}),
+                frames: scene.anims.generateFrameNumbers("attack_anim",{start:2,end:3}),
                 frameRate:10,
                 repeat:0
             });
@@ -170,14 +170,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         if (cursors.up.isDown){
             vy = -this.speed;
-            this.facing = "up";
+            if (vx === 0) { // Only change facing to up if not moving horizontally
+                this.facing = "up";
+            }
         }
         else if (cursors.down.isDown){
             vy = this.speed;
-            this.facing = "down";
+            if (vx === 0) { // Only change facing to down if not moving horizontally
+                this.facing = "down";
+            }
         }
 
         this.setVelocity(vx,vy);
+
+        if (this.facing === "left") {
+            this.setFlipX(false);
+        } else if (this.facing === "right") {
+            this.setFlipX(true);
+        }
 
         let anim = "idle_down";
 

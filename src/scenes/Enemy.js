@@ -94,8 +94,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             this.setVelocity(0);
         }
 
-        if (this.body.velocity.x > 0) this.setFlipX(false);
-        else if (this.body.velocity.x < 0) this.setFlipX(true);
+        if (this.body.velocity.x > 0) this.setFlipX(true);
+        else if (this.body.velocity.x < 0) this.setFlipX(false);
 
         this.setDepth(this.y);
 
