@@ -107,8 +107,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.towerObject.setInteractive({ useHandCursor: true });
         this.towerObject.on('pointerdown', () => {
-            this.scene.stop('HUDScene');
-            this.scene.start('TowerScene');
+            this.scene.pause('GameScene');
+            this.scene.pause('HUDScene');
+            this.scene.launch('TowerScene', { health: this.player.health, chips: this.playerChips, damage: this.player.damage, tower: this.towerObject });
         });
 
         // Set initial tower HP in registry
@@ -232,7 +233,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (!enemy.damage) return;
 
-        enemy.damage(5);
+        enemy.damage(this.player.damage);
 
         this.cameras.main.flash(50,255,255,255);
     }

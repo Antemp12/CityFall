@@ -1,4 +1,43 @@
-// UpgradeScene.js
+class Upgrade {
+    constructor(scene, name, config) {
+        this.scene = scene;
+        this.name = name;
+        this.level = config.level || 0;
+        this.maxLevel = config.maxLevel || 10;
+        this.baseCost = config.baseCost || 10;
+        this.costIncrement = config.costIncrement || 5;
+        this.effect = config.effect;
+        this.icon = config.icon;
+        this.description = config.description;
+    }
+
+    get cost() {
+        return this.baseCost + (this.level * this.costIncrement);
+    }
+
+    canAfford() {
+        return this.scene.chips >= this.cost;
+    }
+
+    isMaxLevel() {
+        return this.level >= this.maxLevel;
+    }
+
+    purchase() {
+        if (!this.canAfford() || this.isMaxLevel()) {
+            return false;
+        }
+
+        this.scene.chips -= this.cost;
+        this.level++;
+        this.effect(this.level);
+
+        this.scene.registry.set(`upgrade_level_${this.name}`, this.level);
+        this.scene.registry.set("chips", this.scene.chips);
+        return true;
+    }
+}
+
 
 export default class UpgradeScene extends Phaser.Scene {
 
@@ -9,100 +48,127 @@ export default class UpgradeScene extends Phaser.Scene {
     player;
     tower;
     chips;
+    callingScene;
 
-    icons = [];
-    texts = [];
+    upgrades = [];
+    upgradeTexts = [];
 
-    create(data) {
 
+    init(data) {
         this.player = data.player;
         this.tower = data.tower;
+        this.callingScene = data.callingScene || 'GameScene';
+    }
 
-        this.chips = this.registry.get("chips");
+    preload() {
+        this.load.image('heart_icon', 'https://cdn.iconscout.com/icon/free/png-256/free-heart-icon-svg-download-png-1502416.png');
+        this.load.image('boot_icon', 'https://cdn.iconscout.com/icon/free/png-256/free-boot-icon-svg-download-png-10665072.png');
+    }
 
-        this.add.text(400,40,"UPGRADES", {
+    create() {
+        const cam = this.cameras.main;
+        const centerX = cam.width / 2;
+        const centerY = cam.height / 2;
+
+        this.chips = this.registry.get("chips") || 0;
+
+        this.add.rectangle(centerX, centerY, 600, 500, 0x000000, 0.8).setStrokeStyle(2, 0xffffff);
+
+        this.add.text(centerX, centerY - 200, "UPGRADES", {
             fontSize: "40px",
             fill: "#ffffff"
         }).setOrigin(0.5);
 
-        // --- ICONES E OPCOES ---
-        const list = [
-            { name:"Player HP", cost:20, action: () => this.player.maxHealth += 10 },
-            { name:"Player Damage", cost:30, action: () => this.player.damage += 2 },
-            { name:"Player Speed", cost:25, action: () => this.player.speed += 10 },
-            { name:"Tower HP", cost:40, action: () => this.tower.health += 20 },
+        this.chipsText = this.add.text(centerX, centerY - 150, `Chips: ${this.chips}`, {
+            fontSize: "24px",
+            fill: "#ffff00"
+        }).setOrigin(0.5);
+
+        // --- UPGRADES ---
+        let upgradeConfigs = [
+            {
+                name: "PlayerHP",
+                baseCost: 20,
+                costIncrement: 10,
+                effect: () => this.player.maxHealth += 20,
+                icon: 'heart_icon',
+                description: "+20 HP"
+            },
+            {
+                name: "PlayerSpeed",
+                baseCost: 25,
+                costIncrement: 15,
+                effect: () => this.player.speed += 10,
+                icon: 'boot_icon',
+                description: "+10 Speed"
+            },
         ];
 
-        let x = 200;
-        let y = 150;
-
-        list.forEach((item, i) => {
-
-            const rect = this.add.rectangle(x,y,150,150,0x222222)
-                .setStrokeStyle(2,0xffffff)
-                .setInteractive();
-
-            const text = this.add.text(x,y, `${item.name}\nCost:${item.cost}`, {
-                fontSize:"18px",
-                align:"center"
-            }).setOrigin(0.5);
-
-            rect.on("pointerdown", () => {
-                this.buy(item);
+        if (this.tower) {
+            upgradeConfigs.push({
+                name: "TowerHP",
+                baseCost: 40,
+                costIncrement: 20,
+                effect: () => this.tower.health += 100,
+                icon: 'heart_icon',
+                description: "+100 tower HP"
             });
+        }
 
-            this.icons.push(rect);
-            this.texts.push(text);
-
-            x += 220;
-
-            if ((i+1) % 3 === 0) {
-                x = 200;
-                y += 220;
-            }
+        this.upgrades = upgradeConfigs.map(config => {
+            const level = this.registry.get(`upgrade_level_${config.name}`) || 0;
+            return new Upgrade(this, config.name, { ...config, level });
         });
 
+        let x = centerX - (this.upgrades.length - 1) * 150 / 2;
+        let y = centerY;
 
-        // botão sair
-        this.add.text(400,550,"PRESS ENTER TO EXIT", {
-            fontSize:"22px",
-            fill:"#ffff00"
+        this.upgrades.forEach((upgrade, i) => {
+            const icon = this.add.image(x, y, upgrade.icon).setScale(0.5).setInteractive();
+            icon.on("pointerdown", () => this.buy(upgrade, i));
+
+            const text = this.add.text(x, y + 100, "", {
+                fontSize: "16px",
+                align: "center",
+                fill: "#ffffff"
+            }).setOrigin(0.5);
+            this.upgradeTexts.push(text);
+
+            this.updateUpgradeText(upgrade, i);
+
+            x += 150;
+        });
+
+        this.add.text(centerX, centerY + 200, "PRESS ENTER TO EXIT", {
+            fontSize: "22px",
+            fill: "#ffff00"
         }).setOrigin(0.5);
 
         this.input.keyboard.on("keydown-ENTER", this.exit, this);
-
-        // pausar jogo
-        this.scene.pause("GameScene");
+        this.scene.pause(this.callingScene);
     }
 
-
-
-    buy(item) {
-        if (this.chips < item.cost) return;
-
-        this.chips -= item.cost;
-
-        item.action();
-
-        this.registry.set("chips", this.chips);
-
-        this.updateTexts();
+    updateUpgradeText(upgrade, index) {
+        const text = this.upgradeTexts[index];
+        if (upgrade.isMaxLevel()) {
+            text.setText(`${upgrade.name}\nLevel: MAX\n${upgrade.description}`);
+        } else {
+            text.setText(`${upgrade.name}\nLevel: ${upgrade.level}\nCost: ${upgrade.cost}\n${upgrade.description}`);
+        }
     }
 
+    buy(upgrade, index) {
+        if (upgrade.purchase()) {
+            this.chipsText.setText(`Chips: ${this.chips}`);
+            this.updateUpgradeText(upgrade, index);
 
-
-    updateTexts() {
-        this.texts.forEach((t,i) => {
-            t.setText(
-                `${t.text.split("\n")[0]}\nCost:${this.icons[i].cost}`
-            );
-        });
+            // Visual feedback
+            const icon = this.upgrades.map(u => u.icon)[index];
+        }
     }
-
-
 
     exit() {
-        this.scene.resume("GameScene");
+        this.scene.resume(this.callingScene);
         this.scene.stop();
     }
 }

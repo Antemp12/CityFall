@@ -5,6 +5,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     maxHealth = 100;
     health = 100;
+    damage = 5;
 
     speed = 200;
     facing = "down";
