@@ -91,12 +91,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
 
-
-
         // PLAYER
         this.player = new Player(this,480,270,"Idle");
-
-
+        this.player.setDepth(this.player.y); // Set initial depth for the player
 
         // TORRE
         this.towerObject = this.physics.add.sprite(
@@ -104,6 +101,7 @@ export default class GameScene extends Phaser.Scene {
             this.map.heightInPixels/2,
             "torre"
         );
+        this.towerObject.setDepth(this.towerObject.y); // Set depth for the tower once
 
         this.towerObject.body.immovable = true;
         this.towerObject.health = this.towerHealth;
@@ -136,8 +134,6 @@ export default class GameScene extends Phaser.Scene {
         // Initialize wave manager
         this.waveManager = new WaveManager(this, targets);
         this.waveManager.start();
-
-
 
         // GRUPOS
         this.enemies = this.physics.add.group({ classType: Enemy, runChildUpdate:true });
@@ -237,6 +233,11 @@ export default class GameScene extends Phaser.Scene {
             console.log("Game song not loaded");
         }
 
+        // Set depth for tilemap layers
+        chao.setDepth(0);
+        objetos.setDepth(1);
+        torreLayer.setDepth(2);
+
     }
 
 
@@ -318,6 +319,19 @@ export default class GameScene extends Phaser.Scene {
         if (this.isGameOver) return;
 
         this.player.update(this.cursors);
+        this.player.setDepth(this.player.y); // Y-sorting for player
+
+        // Y-sorting for enemies
+        this.enemies.children.each(enemy => {
+            enemy.setDepth(enemy.y);
+        });
+        this.spiderRobots.children.each(enemy => {
+            enemy.setDepth(enemy.y);
+        });
+        this.flyRobots.children.each(enemy => {
+            enemy.setDepth(enemy.y);
+        });
+
         this.waveManager.update();
     }
 
