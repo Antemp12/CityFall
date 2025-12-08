@@ -1,33 +1,27 @@
-// FlyRobot.js
+import Enemy from "./Enemy.js";
 
-export default class FlyRobot extends Phaser.Physics.Arcade.Sprite {
-
-    health = 4;
-    speed = 100;
-    chipValue = 2;
-    damageValue = 12;
-
-    targets = null;
+export default class FlyRobot extends Enemy {
 
     constructor(scene, x, y, spriteKey, targets) {
-        super(scene, x, y, spriteKey);
+        // Chamar o construtor da classe Enemy, mas passar uma spriteKey temporária
+        // porque as animações do Enemy base não são necessárias.
+        super(scene, x, y, spriteKey, targets);
 
-        scene.add.existing(this);
-        scene.physics.add.existing(this);
+        // Substituir propriedades da classe base
+        this.health = 4;
+        this.speed = 100;
+        this.chipValue = 2;
+        this.damageValue = 12;
 
-        this.targets = targets;
-
-        this.setOrigin(0.5);
-
+        // Configurações específicas do corpo para o FlyRobot
         this.body.setAllowGravity(false);
-        this.body.setImmovable(true);
-        this.body.setMaxVelocity(this.speed);
-
         this.body.setSize(20,20);
         this.body.setOffset(6,6);
+        
+        // A velocidade máxima precisa ser redefinida, pois a velocidade foi alterada
+        this.body.setMaxVelocity(this.speed);
 
-        this.createAnimations(scene);
-
+        // A animação inicial é diferente da do Enemy base
         this.anims.play("fly_move");
     }
 
@@ -36,13 +30,17 @@ export default class FlyRobot extends Phaser.Physics.Arcade.Sprite {
     // ===========================
     // ANIMAÇÕES
     // ===========================
+    // Este método substitui o createAnimations da classe Enemy
     createAnimations(scene) {
-        scene.anims.create({
-            key: "fly_move",
-            frames: scene.anims.generateFrameNumbers("enemy_fly", { start:0, end:9 }),
-            frameRate: 15,
-            repeat: -1
-        });
+        // Adiciona a verificação para evitar recriar a animação
+        if (!scene.anims.exists("fly_move")) {
+            scene.anims.create({
+                key: "fly_move",
+                frames: scene.anims.generateFrameNumbers("enemy_fly", { start:0, end:9 }),
+                frameRate: 15,
+                repeat: -1
+            });
+        }
     }
 
 
@@ -50,6 +48,7 @@ export default class FlyRobot extends Phaser.Physics.Arcade.Sprite {
     // ===========================
     // UPDATE
     // ===========================
+    // O método update é mantido porque o FlyRobot tem uma lógica de profundidade e animação diferente
     update() {
 
         if (this.health <= 0 || !this.body.enable) {
@@ -81,22 +80,10 @@ export default class FlyRobot extends Phaser.Physics.Arcade.Sprite {
         }
 
 
-        this.setDepth(1500);
+        this.setDepth(1500); // Profundidade fixa para o FlyRobot
 
         this.anims.play("fly_move", true);
     }
-
-
-
-    // ===========================
-    // RECEBER DANO
-    // ===========================
-    damage(amount) {
-        this.health -= amount;
-
-        if (this.health <= 0) {
-            this.scene.events.emit("robot_killed", this.chipValue);
-            this.destroy();
-        }
-    }
+    
+    // O método damage(amount) foi removido. Agora será herdado da classe Enemy.
 }

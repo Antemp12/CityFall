@@ -1,33 +1,25 @@
-// SpiderRobot.js
+import Enemy from "./Enemy.js";
 
-export default class SpiderRobot extends Phaser.Physics.Arcade.Sprite {
-    
-    health = 5;
-    speed = 70;
-    chipValue = 1;
-    damageValue = 10;
-
-    targets = null;
+export default class SpiderRobot extends Enemy {
 
     constructor(scene, x, y, spriteKey, targets) {
-        super(scene, x, y, spriteKey);
+        // Chamar o construtor da classe Enemy
+        super(scene, x, y, spriteKey, targets);
 
-        scene.add.existing(this);
-        scene.physics.add.existing(this);
-
-        this.targets = targets;
-
-        this.setOrigin(0.5);
-        this.setCollideWorldBounds(true);
-
-        this.body.setImmovable(true);
-        this.body.setMaxVelocity(this.speed);
-
+        // Substituir propriedades da classe base
+        this.health = 5;
+        this.speed = 70;
+        this.chipValue = 1;
+        this.damageValue = 10;
+        
+        // Configurações específicas do corpo para o SpiderRobot
         this.body.setSize(20,15);
         this.body.setOffset(6,17);
 
-        this.createAnimations(scene);
+        // A velocidade máxima precisa ser redefinida, pois a velocidade foi alterada
+        this.body.setMaxVelocity(this.speed);
 
+        // A animação inicial é diferente da do Enemy base
         this.anims.play("spider_walk");
     }
 
@@ -36,13 +28,17 @@ export default class SpiderRobot extends Phaser.Physics.Arcade.Sprite {
     // ===========================
     // ANIMAÇÕES
     // ===========================
+    // Este método substitui o createAnimations da classe Enemy
     createAnimations(scene) {
-        scene.anims.create({
-            key: "spider_walk",
-            frames: scene.anims.generateFrameNumbers("enemy_spider", { start:0, end:5 }),
-            frameRate: 10,
-            repeat: -1
-        });
+        // Adiciona a verificação para evitar recriar a animação
+        if (!scene.anims.exists("spider_walk")) {
+            scene.anims.create({
+                key: "spider_walk",
+                frames: scene.anims.generateFrameNumbers("enemy_spider", { start:0, end:5 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
     }
 
 
@@ -50,6 +46,7 @@ export default class SpiderRobot extends Phaser.Physics.Arcade.Sprite {
     // ===========================
     // UPDATE
     // ===========================
+    // O método update é mantido porque o SpiderRobot tem uma animação diferente
     update() {
 
         if (this.health <= 0 || !this.body.enable) {
@@ -89,17 +86,5 @@ export default class SpiderRobot extends Phaser.Physics.Arcade.Sprite {
         this.anims.play("spider_walk", true);
     }
 
-
-
-    // ===========================
-    // RECEBER DANO
-    // ===========================
-    damage(amount) {
-        this.health -= amount;
-
-        if (this.health <= 0) {
-            this.scene.events.emit("robot_killed", this.chipValue);
-            this.destroy();
-        }
-    }
+    // O método damage(amount) foi removido. Agora será herdado da classe Enemy.
 }

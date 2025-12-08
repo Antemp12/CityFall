@@ -24,7 +24,7 @@ export default class HUDScene extends Phaser.Scene {
         }).setOrigin(0.5, 0);
 
         this.towerHealthBar = this.add.graphics();
-        this.drawTowerHealthBar(100, centerX); // Initial full health
+        this.drawTowerHealthBar(1000, centerX); // Initial full health
 
         this.playerText = this.add.text(20,70, "Player: 100", {
             fontSize: "20px",
@@ -49,6 +49,8 @@ export default class HUDScene extends Phaser.Scene {
 
 
     updateHUD(parent, key, value) {
+        if (!this.cameras.main) return;
+
         if (key === "towerHP") {
             this.drawTowerHealthBar(value);
         }

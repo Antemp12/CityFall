@@ -63,6 +63,9 @@ export default class GameScene extends Phaser.Scene {
 
         // Reset game over flag on scene restart
         this.isGameOver = false;
+        this.playerChips = 0;
+        this.kills = 0;
+        this.towerHealth = 1000;
 
         // LIGA HUD
         this.scene.launch("HUDScene");
@@ -137,9 +140,11 @@ export default class GameScene extends Phaser.Scene {
         this.flyRobots.get(500,100,"enemy_fly",targets);
 
         // Listen for robot killed event
+        this.events.off("robot_killed", this.collectChips, this);
         this.events.on("robot_killed", this.collectChips, this);
 
         // Listen for game over event
+        this.events.off("gameover", this.handleGameOver, this);
         this.events.on("gameover", this.handleGameOver, this);
 
 
@@ -236,9 +241,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleTowerEnemyOverlap(tower, enemy){
-        if (!enemy.damageValue || enemy.lastDamageTime && this.time.now - enemy.lastDamageTime < 3000) return;
+        if (!enemy.damageValue || (enemy.lastTowerAttackTime && this.time.now - enemy.lastTowerAttackTime < 1000)) return;
 
-        enemy.lastDamageTime = this.time.now;
+        enemy.lastTowerAttackTime = this.time.now;
         tower.health -= enemy.damageValue;
 
         if (tower.health <= 0) {
@@ -261,7 +266,7 @@ export default class GameScene extends Phaser.Scene {
 
     handleGameOver(){
         this.physics.pause();
-        this.scene.pause("HUDScene");
+       this.scene.stop("HUDScene");
         this.isGameOver = true;
 
         const timePassed = Math.floor((this.time.now - this.startTime) / 1000);

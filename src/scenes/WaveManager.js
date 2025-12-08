@@ -112,10 +112,6 @@ export default class WaveManager {
         enemy.health = this.enemyStats.health;
         enemy.speed  = this.enemyStats.speed;
 
-        enemy.damage = (amt) => {
-            enemy.health -= amt;
-        };
-
     }
 
 
