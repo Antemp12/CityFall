@@ -16,8 +16,9 @@ export default class WaveManager {
         speed: 50
     };
 
-    constructor(scene){
+    constructor(scene, targets){
         this.scene = scene;
+        this.targets = targets;
     }
 
 
@@ -26,7 +27,7 @@ export default class WaveManager {
     // COMEÇA SISTEMA
     // ===========================================================
     start(){
-        this.nextWaveTime = this.scene.time.now + 30000;
+        this.nextWaveTime = this.scene.time.now + 10000;
     }
 
 
@@ -40,7 +41,7 @@ export default class WaveManager {
 
         if (this.scene.time.now >= this.nextWaveTime){
             this.startWave();
-            this.nextWaveTime = this.scene.time.now + 30000;
+            this.nextWaveTime = this.scene.time.now + 10000;
         }
     }
 
@@ -68,6 +69,7 @@ export default class WaveManager {
 
         console.log("WAVE", this.wave, "iniciada!");
         this.wave++;
+        this.scene.registry.set("wave", this.wave);
     }
 
 
@@ -79,10 +81,31 @@ export default class WaveManager {
 
         const map = this.scene.map;
 
-        const x = Phaser.Math.Between(0, map.widthInPixels);
-        const y = Phaser.Math.Between(0, map.heightInPixels);
+        // Spawn near the edges of the map
+        const side = Phaser.Math.Between(0, 3); // 0: top, 1: bottom, 2: left, 3: right
+        let x, y;
 
-        const enemy = this.scene.enemies.get(x,y,'robot_idle');
+        if (side === 0) { // top
+            x = Phaser.Math.Between(0, map.widthInPixels);
+            y = Phaser.Math.Between(0, 100);
+        } else if (side === 1) { // bottom
+            x = Phaser.Math.Between(0, map.widthInPixels);
+            y = Phaser.Math.Between(map.heightInPixels - 100, map.heightInPixels);
+        } else if (side === 2) { // left
+            x = Phaser.Math.Between(0, 100);
+            y = Phaser.Math.Between(0, map.heightInPixels);
+        } else { // right
+            x = Phaser.Math.Between(map.widthInPixels - 100, map.widthInPixels);
+            y = Phaser.Math.Between(0, map.heightInPixels);
+        }
+
+        const groups = [this.scene.enemies, this.scene.spiderRobots, this.scene.flyRobots];
+        const sprites = ["robot_idle", "enemy_spider", "enemy_fly"];
+        const index = Phaser.Math.Between(0, 2);
+        const group = groups[index];
+        const sprite = sprites[index];
+
+        const enemy = group.get(x, y, sprite, this.targets);
 
         if (!enemy) return;
 

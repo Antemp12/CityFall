@@ -4,7 +4,8 @@ export default class SpiderRobot extends Phaser.Physics.Arcade.Sprite {
     
     health = 5;
     speed = 70;
-    chipValue = 8;
+    chipValue = 1;
+    damageValue = 10;
 
     targets = null;
 

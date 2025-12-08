@@ -1,18 +1,18 @@
 export default class Player extends Phaser.Physics.Arcade.Sprite {
 
-    // ESTADOS
     isAttacking = false;
     isDead = false;
 
-    maxHealth = 10;
-    health = 10;
+    maxHealth = 100;
+    health = 100;
 
     speed = 200;
+    facing = "down";
+    lastDamageTime = 0;
 
-    facing = "down";     // direção do ataque
 
-    constructor(scene, x, y, key){
-        super(scene, x, y, key);
+    constructor(scene, x, y, spriteKey){
+        super(scene,x,y,spriteKey);
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
@@ -22,77 +22,82 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.setSize(24,48);
         this.body.setOffset(12,8);
 
-        // INPUT
-        this.keys = scene.input.keyboard.addKeys("W,S,A,D,SPACE");
+        this.createAnimations(scene);
 
-        // HITBOX ATAQUE
         this.attackHitbox = scene.add.rectangle(0,0,50,50,0xff0000,0);
         scene.physics.add.existing(this.attackHitbox);
 
         this.attackHitbox.body.setAllowGravity(false);
-        this.attackHitbox.body.setEnable(false);
+        this.attackHitbox.body.enable = false;
 
-        this.createAnimations(scene);
-
-        this.anims.play("idle_down", true);
-
+        this.anims.play("idle_down");
     }
 
 
 
-    // ===========================================================
+    // ----------------------------------------------------------
     // ANIMAÇÕES
-    // ===========================================================
+    // ----------------------------------------------------------
     createAnimations(scene){
 
-        scene.anims.create({
-            key: "idle_down",
-            frames: scene.anims.generateFrameNumbers("Idle",{start:0,end:7}),
-            frameRate: 6,
-            repeat:-1
-        });
+        if (!scene.anims.exists("idle_down")){
+            scene.anims.create({
+                key:"idle_down",
+                frames: scene.anims.generateFrameNumbers("Idle",{start:0,end:7}),
+                frameRate:6,
+                repeat:-1
+            });
+        }
 
-        scene.anims.create({
-            key: "walk_down",
-            frames: scene.anims.generateFrameNumbers("walk",{start:0,end:7}),
-            frameRate: 12,
-            repeat:-1
-        });
+        if (!scene.anims.exists("walk_down")){
+            scene.anims.create({
+                key:"walk_down",
+                frames: scene.anims.generateFrameNumbers("walk",{start:0,end:7}),
+                frameRate:12,
+                repeat:-1
+            });
+        }
 
-        scene.anims.create({
-            key: "walk_up",
-            frames: scene.anims.generateFrameNumbers("walk",{start:25,end:32}),
-            frameRate: 12,
-            repeat:-1
-        });
+        if (!scene.anims.exists("walk_up")){
+            scene.anims.create({
+                key:"walk_up",
+                frames: scene.anims.generateFrameNumbers("walk",{start:25,end:32}),
+                frameRate:12,
+                repeat:-1
+            });
+        }
 
-        scene.anims.create({
-            key: "walk_side",
-            frames: scene.anims.generateFrameNumbers("walk",{start:16,end:23}),
-            frameRate: 12,
-            repeat:-1
-        });
+        if (!scene.anims.exists("walk_side")){
+            scene.anims.create({
+                key:"walk_side",
+                frames: scene.anims.generateFrameNumbers("walk",{start:16,end:23}),
+                frameRate:12,
+                repeat:-1
+            });
+        }
 
-
-        // ATAQUE COM APENAS 2 FRAMES
-        scene.anims.create({
-            key:"attack_swing",
-            frames: scene.anims.generateFrameNumbers("attack",{start:0,end:1}),
-            frameRate:10,
-            repeat:0
-        });
+        if (!scene.anims.exists("attack_swing")){
+            scene.anims.create({
+                key:"attack_swing",
+                frames: scene.anims.generateFrameNumbers("attack_anim",{start:0,end:1}),
+                frameRate:10,
+                repeat:0
+            });
+        }
     }
 
 
 
-    // ===========================================================
+    // ----------------------------------------------------------
     // DANO
-    // ===========================================================
+    // ----------------------------------------------------------
     takeDamage(amount){
 
         if (this.isDead) return;
 
         this.health -= amount;
+
+        this.scene.registry.set("playerHP", this.health);
 
         if (this.health <= 0){
             this.isDead = true;
@@ -104,47 +109,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
 
 
-    // ===========================================================
+    // ----------------------------------------------------------
     // ATAQUE
-    // ===========================================================
-    attack(){
+    // ----------------------------------------------------------
+    handleAttack(){
 
         if (this.isAttacking || this.isDead) return;
 
         this.isAttacking = true;
 
-        this.attackHitbox.body.setEnable(true);
+        this.attackHitbox.body.enable = true;
 
         this.anims.play("attack_swing");
 
         const offset = 40;
 
-        switch(this.facing){
-            case "left":
-                this.attackHitbox.setPosition(this.x - offset, this.y);
-                break;
+        if (this.facing === "left")  this.attackHitbox.setPosition(this.x - offset, this.y);
+        if (this.facing === "right") this.attackHitbox.setPosition(this.x + offset, this.y);
+        if (this.facing === "up")    this.attackHitbox.setPosition(this.x, this.y - offset);
+        if (this.facing === "down")  this.attackHitbox.setPosition(this.x, this.y + offset);
 
-            case "right":
-                this.attackHitbox.setPosition(this.x + offset, this.y);
-                break;
+        this.scene.time.delayedCall(150,
+            () => this.attackHitbox.body.enable = false
+        );
 
-            case "up":
-                this.attackHitbox.setPosition(this.x, this.y - offset);
-                break;
-
-            case "down":
-                this.attackHitbox.setPosition(this.x, this.y + offset);
-                break;
-        }
-
-
-        // DESACTIVAR HITBOX
-        this.scene.time.delayedCall(150, () => {
-            this.attackHitbox.body.setEnable(false);
-        });
-
-
-        // TERMINAR ATAQUE
         this.once("animationcomplete-attack_swing", () => {
             this.isAttacking = false;
         });
@@ -152,19 +140,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
 
 
-    // ===========================================================
+    // ----------------------------------------------------------
     // UPDATE
-    // ===========================================================
-    update(){
+    // ----------------------------------------------------------
+    update(cursors){
 
         if (this.isDead) {
             this.setVelocity(0);
             return;
-        }
-
-        // ATAQUE
-        if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE)){
-            this.attack();
         }
 
         if (this.isAttacking){
@@ -172,66 +155,38 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
+        let vx = 0;
+        let vy = 0;
+
+        if (cursors.left.isDown){
+            vx = -this.speed;
+            this.facing = "left";
+        }
+        else if (cursors.right.isDown){
+            vx = this.speed;
+            this.facing = "right";
+        }
+
+        if (cursors.up.isDown){
+            vy = -this.speed;
+            this.facing = "up";
+        }
+        else if (cursors.down.isDown){
+            vy = this.speed;
+            this.facing = "down";
+        }
+
+        this.setVelocity(vx,vy);
 
         let anim = "idle_down";
-        let moving = false;
 
-        this.setVelocity(0);
-
-
-        // LEFT
-        if (this.keys.A.isDown){
-            this.setVelocityX(-this.speed);
-            this.setFlipX(false);
-
-            anim = "walk_side";
-            this.facing = "left";
-            moving = true;
+        if (vx !== 0 || vy !== 0){
+            if (this.facing === "up") anim = "walk_up";
+            else if (this.facing === "down") anim = "walk_down";
+            else anim = "walk_side";
         }
 
-        // RIGHT
-        else if (this.keys.D.isDown){
-            this.setVelocityX(this.speed);
-            this.setFlipX(true);
-
-            anim = "walk_side";
-            this.facing = "right";
-            moving = true;
-        }
-
-
-        // UP
-        if (this.keys.W.isDown){
-            this.setVelocityY(-this.speed);
-
-            anim = "walk_up";
-            this.facing = "up";
-            moving = true;
-        }
-
-        // DOWN
-        else if (this.keys.S.isDown){
-            this.setVelocityY(this.speed);
-
-            anim = "walk_down";
-            this.facing = "down";
-            moving = true;
-        }
-
-
-        // NORMALIZAR VELOCIDADE
-        this.body.velocity.normalize().scale(moving ? this.speed : 0);
-
-
-        // IDLE
-        if (!moving){
-            anim = anim.replace("walk","idle");
-        }
-
-
-        // TROCAR ANIMAÇÃO
-        if (this.anims.currentAnim.key !== anim){
-            this.anims.play(anim,true);
-        }
+        this.anims.play(anim, true);
     }
 }
+

@@ -4,7 +4,8 @@ export default class FlyRobot extends Phaser.Physics.Arcade.Sprite {
 
     health = 4;
     speed = 100;
-    chipValue = 12;
+    chipValue = 2;
+    damageValue = 12;
 
     targets = null;
 
