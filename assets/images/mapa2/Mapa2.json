@@ -1,12 +1,4 @@
 { "compressionlevel":-1,
- "editorsettings":
-    {
-     "export":
-        {
-         "format":"json",
-         "target":"..\/mapa2\/Mapa2.json"
-        }
-    },
  "height":30,
  "infinite":false,
  "layers":[
@@ -143,7 +135,7 @@
         {
          "columns":21,
          "firstgid":1,
-         "image":"..\/mapa2\/pixel-cyberpunk-interior.png",
+         "image":"pixel-cyberpunk-interior.png",
          "imageheight":352,
          "imagewidth":672,
          "margin":0,
@@ -247,7 +239,7 @@
         {
          "columns":13,
          "firstgid":232,
-         "image":"..\/mapa2\/nucleo.png",
+         "image":"nucleo.png",
          "imageheight":440,
          "imagewidth":440,
          "margin":0,
@@ -260,7 +252,7 @@
         {
          "columns":15,
          "firstgid":401,
-         "image":"..\/mapa2\/nucleuoUp.png",
+         "image":"nucleuoUp.png",
          "imageheight":500,
          "imagewidth":500,
          "margin":0,

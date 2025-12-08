@@ -105,6 +105,12 @@ export default class GameScene extends Phaser.Scene {
         this.towerObject.body.immovable = true;
         this.towerObject.health = this.towerHealth;
 
+        this.towerObject.setInteractive({ useHandCursor: true });
+        this.towerObject.on('pointerdown', () => {
+            this.scene.stop('HUDScene');
+            this.scene.start('TowerScene');
+        });
+
         // Set initial tower HP in registry
         this.registry.set("towerHP", this.towerHealth);
 
