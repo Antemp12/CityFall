@@ -16,7 +16,6 @@ export default class TowerScene extends Phaser.Scene {
 
     toggleUpgradeScene(player, tower, callingScene) {
         this.isUpgradeMenuOpen = true;
-        this.scene.pause('TowerScene');
 
         const data = { player: player, tower: tower, callingScene: callingScene };
         const upgradeScene = this.scene.get('UpgradeScene');
@@ -57,6 +56,8 @@ export default class TowerScene extends Phaser.Scene {
     }
 
     create() {
+        console.log("TowerScene: create() called.");
+        this.cameras.main.setBackgroundColor('#000000'); // Ensure background is black
         // Mapa
         const map = this.make.tilemap({ key: 'mapa-torre' });
         const tilesetInterior = map.addTilesetImage('pixel-cyberpunk-interior', 'Interior');
@@ -72,6 +73,7 @@ export default class TowerScene extends Phaser.Scene {
         this.player.health = this.playerHealth;
         this.player.damage = this.playerDamage;
         this.registry.set("chips", this.playerChips);
+        console.log("TowerScene: Player created and camera set to follow.");
 
         // Colisões
         objetos2Layer.setCollisionByProperty({ collides: true });
@@ -91,6 +93,7 @@ export default class TowerScene extends Phaser.Scene {
 
         this.input.on('pointerdown', (pointer) => {
             if (pointer.leftButtonDown()) {
+                console.log("TowerScene: Left click detected, exiting TowerScene.");
                 const gameScene = this.scene.get('GameScene');
                 gameScene.player.health = this.player.health;
                 gameScene.player.damage = this.player.damage;
@@ -123,9 +126,11 @@ export default class TowerScene extends Phaser.Scene {
         this.events.on('resume', () => {
             console.log("TowerScene: Resumed. isUpgradeMenuOpen was:", this.isUpgradeMenuOpen);
             this.isUpgradeMenuOpen = false;
-            console.log("TowerScene: isUpgradeMenuOpen set to false.");
+            console.log("TowerScene: isUpgradeMenuOpen set to false after resume.");
             this.scene.setVisible(true);
         });
+
+        this.scene.setVisible(true); // Explicitly ensure TowerScene is visible
     }
 
     update() {
@@ -133,5 +138,17 @@ export default class TowerScene extends Phaser.Scene {
         if (this.player && !this.isUpgradeMenuOpen) {
             this.player.update(this.cursors);
         }
+    }
+
+    shutdown() {
+        console.log("TowerScene: shutdown() called. Cleaning up input listeners.");
+        this.input.keyboard.off("keydown-SPACE", this.player.handleAttack, this.player);
+        this.input.keyboard.off("keydown-U");
+        this.input.off("pointerdown");
+        this.events.off('resume'); // Also remove the resume listener
+        // It's good practice to also nullify references if they could cause memory leaks
+        this.player = null;
+        this.tower = null;
+        this.cursors = null;
     }
 }

@@ -203,10 +203,9 @@ export default class UpgradeScene extends Phaser.Scene {
     }
 
     exit() {
-        console.log("UpgradeScene: Exiting...");
+        console.log("UpgradeScene: Exiting. Resuming", this.callingScene, "and pausing UpgradeScene.");
         this.input.keyboard.off("keydown-U", this.exit, this);
         this.scene.setVisible(false);
-        console.log("UpgradeScene: Resuming callingScene and then pausing itself...");
         this.scene.resume(this.callingScene);
         this.scene.pause();
         console.log("UpgradeScene: Exit method finished.");
